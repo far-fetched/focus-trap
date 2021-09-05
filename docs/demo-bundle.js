@@ -197,11 +197,11 @@ var createFocusTrap = function createFocusTrap(elements, userOptions) {
    */
 
 
-  var getNodeForOption = function getNodeForOption(optionName) {
+  var getNodeForOption = function getNodeForOption(optionName, params) {
     var optionValue = config[optionName];
 
     if (typeof optionValue === 'function') {
-      optionValue = optionValue();
+      optionValue = optionValue(params);
     }
 
     if (!optionValue) {
@@ -301,10 +301,10 @@ var createFocusTrap = function createFocusTrap(elements, userOptions) {
   };
 
   var getReturnFocusNode = function getReturnFocusNode(previousActiveElement) {
-    // returning false is not supported for this option: if falsy, we fallback
-    //  to the element focused just before the trap was activated
-    var node = getNodeForOption('setReturnFocus');
-    return node ? node : previousActiveElement;
+    var node = getNodeForOption('setReturnFocus', {
+      previousActiveElement: previousActiveElement
+    });
+    return node ? node : node === false ? false : previousActiveElement;
   }; // This needs to be done on mousedown and touchstart instead of click
   // so that it precedes the focus event.
 
@@ -653,7 +653,7 @@ var createFocusTrap = function createFocusTrap(elements, userOptions) {
 exports.createFocusTrap = createFocusTrap;
 
 
-},{"tabbable":25}],2:[function(require,module,exports){
+},{"tabbable":26}],2:[function(require,module,exports){
 const { createFocusTrap } = require('../../dist/focus-trap');
 
 const container = document.getElementById('allowoutsideclick');
@@ -1009,13 +1009,14 @@ require('./iframe');
 require('./allow-outside-click');
 require('./click-outside-deactivates');
 require('./set-return-focus');
+require('./set-return-focus-function');
 require('./no-delay');
 require('./multiple-elements');
 require('./multiple-elements-delete');
 require('./multiple-elements-delete-all');
 require('./multiple-elements-multiple-traps');
 
-},{"./allow-outside-click":2,"./animated-dialog":3,"./animated-trigger":4,"./click-outside-deactivates":5,"./default":6,"./delay":7,"./escape-deactivates":8,"./hidden-treasures":9,"./iframe":10,"./initial-element-no-escape":12,"./initially-focused-container":13,"./input-activation":14,"./multiple-elements":18,"./multiple-elements-delete":16,"./multiple-elements-delete-all":15,"./multiple-elements-multiple-traps":17,"./nested":19,"./no-delay":20,"./radio":21,"./set-return-focus":22,"./sibling":23,"./tricky-initial-focus":24}],12:[function(require,module,exports){
+},{"./allow-outside-click":2,"./animated-dialog":3,"./animated-trigger":4,"./click-outside-deactivates":5,"./default":6,"./delay":7,"./escape-deactivates":8,"./hidden-treasures":9,"./iframe":10,"./initial-element-no-escape":12,"./initially-focused-container":13,"./input-activation":14,"./multiple-elements":18,"./multiple-elements-delete":16,"./multiple-elements-delete-all":15,"./multiple-elements-multiple-traps":17,"./nested":19,"./no-delay":20,"./radio":21,"./set-return-focus":23,"./set-return-focus-function":22,"./sibling":24,"./tricky-initial-focus":25}],12:[function(require,module,exports){
 const { createFocusTrap } = require('../../dist/focus-trap');
 
 const container = document.getElementById('iene');
@@ -1422,6 +1423,50 @@ document
 },{"../../dist/focus-trap":1}],22:[function(require,module,exports){
 const { createFocusTrap } = require('../../dist/focus-trap');
 
+const container = document.getElementById('setreturnfocus-function');
+let clickedElement;
+
+const setReturnFocus = (activeTrapElement) => {
+  console.log('last', activeTrapElement);
+  if (clickedElement && clickedElement.id === 'focus-this') {
+    return clickedElement;
+  } else if (clickedElement && clickedElement.id === 'focus-initial') {
+    return activeTrapElement;
+  }
+  return false;
+};
+
+const focusTrap = createFocusTrap('#setreturnfocus-function', {
+  onActivate: () => container.classList.add('is-active'),
+  onDeactivate: () => container.classList.remove('is-active'),
+  setReturnFocus,
+  allowOutsideClick: true,
+});
+
+const handleDeactivate = (e) => {
+  clickedElement = e.target;
+  focusTrap.deactivate();
+};
+
+document
+  .getElementById('activate-setreturnfocus-function')
+  .addEventListener('click', focusTrap.activate);
+
+document
+  .querySelector('#deactivate-setreturnfocus-function > #focus-this')
+  .addEventListener('click', handleDeactivate);
+
+document
+  .querySelector('#deactivate-setreturnfocus-function > #focus-initial')
+  .addEventListener('click', handleDeactivate);
+
+document
+  .querySelector('#deactivate-setreturnfocus-function > #no-focus')
+  .addEventListener('click', handleDeactivate);
+
+},{"../../dist/focus-trap":1}],23:[function(require,module,exports){
+const { createFocusTrap } = require('../../dist/focus-trap');
+
 const container = document.getElementById('setreturnfocus');
 
 const focusTrap = createFocusTrap('#setreturnfocus', {
@@ -1438,7 +1483,7 @@ document
   .getElementById('deactivate-setreturnfocus')
   .addEventListener('click', focusTrap.deactivate);
 
-},{"../../dist/focus-trap":1}],23:[function(require,module,exports){
+},{"../../dist/focus-trap":1}],24:[function(require,module,exports){
 const { createFocusTrap } = require('../../dist/focus-trap');
 
 const container = document.getElementById('sibling-first');
@@ -1478,7 +1523,7 @@ document
   .getElementById('deactivate-second-sibling')
   .addEventListener('click', secondFocusTrap.deactivate);
 
-},{"../../dist/focus-trap":1}],24:[function(require,module,exports){
+},{"../../dist/focus-trap":1}],25:[function(require,module,exports){
 const { createFocusTrap } = require('../../dist/focus-trap');
 
 const container = document.getElementById('tif');
@@ -1506,7 +1551,7 @@ document
   .getElementById('tif-hide-focusable')
   .addEventListener('click', () => (focusable.style.display = 'none'));
 
-},{"../../dist/focus-trap":1}],25:[function(require,module,exports){
+},{"../../dist/focus-trap":1}],26:[function(require,module,exports){
 /*!
 * tabbable 5.2.1
 * @license MIT, https://github.com/focus-trap/tabbable/blob/master/LICENSE
